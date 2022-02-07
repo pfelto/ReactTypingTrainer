@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const topJsWords = [
   "<div></div>",
@@ -35,7 +35,19 @@ function App() {
   );
   const [textInput, setTextInput] = useState("");
   const [results, setResults] = useState({ correct: 0, incorrect: 0 });
+  const [countdown, setCountdown] = useState(60);
+
   const match = textInput.includes(wordToType);
+
+  useEffect(() => {
+    if (countdown > 0) {
+      const countdownTimer = setTimeout(
+        () => setCountdown((countdown) => countdown - 1),
+        1000
+      );
+      return () => clearTimeout(countdownTimer);
+    }
+  }, [countdown]);
 
   function handleChange(e) {
     if (textInput === "" && e.target.value === " ") {
@@ -83,9 +95,11 @@ function App() {
             value={textInput}
             onChange={(e) => handleChange(e)}
           ></input>
+          <div id="timer">{countdown}</div>
           <button
             onClick={() => {
               //can either manually restart everything using set or create a new instance of the game react component by giving it a new key
+              setCountdown(60);
               setTextInput("");
               setResults({ correct: 0, incorrect: 0 });
               setWordToType(topJsWords[getRandomInt(topJsWords.length)]);
