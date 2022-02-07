@@ -1,61 +1,42 @@
-import React, { useEffect, useState } from "react";
-
-const topJsWords = [
-  "<div></div>",
-  "import",
-  "useState",
-  "export",
-  "function",
-  `("")`,
-  ".includes",
-  "variable;",
-  "return",
-  "useEffect",
-  "useReducer",
-  `fetch("url");`,
-  ".then()",
-  "padding:",
-  "default",
-  `@testing-library/jest-dom`,
-  "product",
-  "price",
-  "example",
-  "America",
-  `don't`,
-  "style={{}}",
-];
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
-}
+import React, { useState } from "react";
+import { useCountdown } from "./hooks/useCountdown";
+import { GameDisplay } from "./components/GameDisplay";
+import { topJsWords, getRandomInt } from "./utils";
+import { GameResults } from "./components/GameResults";
+import { TextInput } from "./components/GameInterface/TextInput";
+import { RestartButton } from "./components/GameInterface/RestartButton";
+import { GameInterface } from "./components/GameInterface/GameInterface";
 
 function App() {
+  const [status, setStatus] = useState("idle");
   const [wordToType, setWordToType] = useState(
     topJsWords[getRandomInt(topJsWords.length)]
   );
   const [textInput, setTextInput] = useState("");
   const [results, setResults] = useState({ correct: 0, incorrect: 0 });
-  const [countdown, setCountdown] = useState(60);
+  const [prevResults, setPrevResults] = useState(null);
 
-  const match = textInput.includes(wordToType);
+  const { countdown, setCountdown } = useCountdown(status);
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const countdownTimer = setTimeout(
-        () => setCountdown((countdown) => countdown - 1),
-        1000
-      );
-      return () => clearTimeout(countdownTimer);
-    }
-  }, [countdown]);
+  if (countdown === 0 && status !== "complete") {
+    setStatus("complete");
+    setTextInput("");
+    setWordToType("");
+    setPrevResults(results);
+  }
+
+  const match = wordToType ? textInput.includes(wordToType) : null;
 
   function handleChange(e) {
     if (textInput === "" && e.target.value === " ") {
       return;
     }
+
     if (e.target.value.includes(" ")) {
-      //logic to check if the words are right or wrong and add to the list
-      //clear input text and get a new word
+      if (status === "complete") {
+        setTextInput("");
+        return;
+      }
       textInput.includes(wordToType)
         ? setResults({ ...results, correct: results.correct + 1 })
         : setResults({ ...results, incorrect: results.incorrect + 1 });
@@ -63,6 +44,7 @@ function App() {
       setTextInput("");
       return;
     }
+    if (status === "idle" && countdown > 0) setStatus("active");
     setTextInput(e.target.value);
   }
 
@@ -77,51 +59,31 @@ function App() {
           padding: "0 5px",
         }}
       >
-        <div
-          id="textbox"
-          style={{
-            marginTop: "5px",
-            marginBottom: "5px",
-            border: "2px solid blue",
-            textAlign: "center",
-          }}
-        >
-          {/* Will want to take the string array above and print out 10 words and shift down that as you type later*/}
-          {wordToType}
-        </div>
-        <div id="inputbox" style={{ border: "2px solid green" }}>
-          <input
-            type="text"
-            value={textInput}
-            onChange={(e) => handleChange(e)}
-          ></input>
-          <div id="timer">{countdown}</div>
-          <button
-            onClick={() => {
-              //can either manually restart everything using set or create a new instance of the game react component by giving it a new key
-              setCountdown(60);
-              setTextInput("");
-              setResults({ correct: 0, incorrect: 0 });
-              setWordToType(topJsWords[getRandomInt(topJsWords.length)]);
-            }}
+        <GameDisplay wordToType={wordToType} />
+        <GameInterface>
+          <TextInput
+            textInput={textInput}
+            handleChange={handleChange}
+            status={status}
+          />
+          <div id="timer" style={{ paddingLeft: "2em", paddingRight: "2em" }}>
+            {countdown}
+          </div>
+          <RestartButton
+            setCountdown={setCountdown}
+            setResults={setResults}
+            setTextInput={setTextInput}
+            setWordToType={setWordToType}
+            setStatus
           >
-            restart
-          </button>
-        </div>
-        <div
-          id="results"
-          style={{
-            marginTop: "5px",
-            marginBottom: "5px",
-            border: "2px solid black",
-          }}
-        >
-          <p>input: {textInput}</p>
-          <p>match: {match ? "true" : "false"}</p>
-          <p>Total Words: {results.correct + results.incorrect}</p>
-          <p>correct: {results.correct}</p>
-          <p>incorrect: {results.incorrect}</p>
-        </div>
+            Refresh
+          </RestartButton>
+        </GameInterface>
+        <GameResults
+          match={match}
+          results={results}
+          prevResults={prevResults}
+        />
       </div>
     </div>
   );
