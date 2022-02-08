@@ -48,6 +48,14 @@ function App() {
     setTextInput(e.target.value);
   }
 
+  function handleReset() {
+    setStatus("idle");
+    setCountdown(60);
+    setResults({ correct: 0, incorrect: 0 });
+    setTextInput("");
+    setWordToType(topJsWords[getRandomInt(topJsWords.length)]);
+  }
+
   return (
     <div id="app" style={{ padding: "10px 25px", border: "2px solid red" }}>
       <div
@@ -69,15 +77,7 @@ function App() {
           <div id="timer" style={{ paddingLeft: "2em", paddingRight: "2em" }}>
             {countdown}
           </div>
-          <RestartButton
-            setCountdown={setCountdown}
-            setResults={setResults}
-            setTextInput={setTextInput}
-            setWordToType={setWordToType}
-            setStatus
-          >
-            Refresh
-          </RestartButton>
+          <RestartButton handleReset={handleReset}>Refresh</RestartButton>
         </GameInterface>
         <GameResults
           match={match}
